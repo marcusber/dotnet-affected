@@ -41,6 +41,43 @@ namespace DotnetAffected.Core.Tests
         }
 
         [Fact]
+        public async Task FindProjectsForRelativeFilePaths_ShouldFindSingleProject()
+        {
+            // Arrange
+            var project1 = Repository.CreateCsProject("Project1",
+                proj => proj.AddProperty("TargetFrameworks", "net8.0"));
+
+            var project2 = Repository.CreateCsProject("Project2");
+
+            project2.AddImport(Path.Combine(project1.DirectoryPath, "../includes/include.props"));
+            project1.AddItem("ProjectReference", "../Project2/Project2.csproj");
+
+            await Repository.CreateTextFileAsync(Path.Combine(Repository.Path, "dep/file.json"), "{}");
+
+            await Repository.CreateTextFileAsync(Path.Combine(project1.DirectoryPath, "../includes/include.props"), @"
+<Project xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+    <ItemGroup>
+        <Content Include=""../dep/file.json"" />
+    </ItemGroup>
+</Project>
+");
+
+            var targetFilePath = Path.Combine(Repository.Path, "dep/file.json");
+
+            // Act
+            var projects = this.Provider.GetReferencingProjects(new[]
+                {
+                    targetFilePath,
+                })
+                .ToArray();
+
+            // Assert
+            var project1Node = Graph.FindNodeByPath(project2.FullPath);
+            Assert.Single(projects);
+            Assert.Equal(project1Node, projects.Single());
+        }
+
+        [Fact]
         public async Task FindProjectsForFilePaths_WithMultipleFiles_ShouldFindSingleProject()
         {
             // Arrange

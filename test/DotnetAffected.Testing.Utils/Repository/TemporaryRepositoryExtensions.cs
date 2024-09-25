@@ -156,6 +156,20 @@ namespace DotnetAffected.Testing.Utils
             string contents)
         {
             path = Path.Combine(repo.Path, path);
+
+            var directory = Path.GetDirectoryName(path) ??
+                            throw new InvalidOperationException($"Directory for {path} not found.");
+
+            if (!directory.StartsWith(repo.Path))
+            {
+                throw new InvalidOperationException($"File {path} was outside repo directory.");
+            }
+
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             var file = File.CreateText(path);
             await file.DisposeAsync();
             await File.WriteAllTextAsync(path, contents);
