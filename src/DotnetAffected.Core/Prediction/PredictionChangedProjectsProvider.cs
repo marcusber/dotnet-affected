@@ -76,7 +76,8 @@ namespace DotnetAffected.Core
             {
                 // determine nodes depending on the changed file
                 var nodesWithFiles = collector.PredictionsPerNode
-                    .Where(x => x.Value.Contains(file));
+                    .Where(x => x.Value.Select(Path.GetFullPath).Contains(file));
+                    //.Where(x => x.Value.Contains(file));
 
                 foreach (var (key, _) in nodesWithFiles)
                 {
